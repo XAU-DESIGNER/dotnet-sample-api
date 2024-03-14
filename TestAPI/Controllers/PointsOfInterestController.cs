@@ -12,8 +12,7 @@ namespace CityInfo.API.Controllers
     public class PointsOfInterestController : ControllerBase
     {
         [HttpGet]
-        public ActionResult<IEnumerable<PointOfInterestDto>>
-            GetPointsOfInterest(int cityId)
+        public ActionResult<IEnumerable<PointOfInterestDto>> GetPointsOfInterest(int cityId)
         {
             var city =
                 CitiesDataStore.current.Cities
@@ -98,7 +97,7 @@ namespace CityInfo.API.Controllers
         }
         #endregion
 
-        #region Edit
+        #region (PUT) Edit
         [HttpPut("{pontiOfInterestId}")]
         public ActionResult UpdatePointOfInterest(int cityId,
             int pontiOfInterestId,
@@ -124,7 +123,7 @@ namespace CityInfo.API.Controllers
         }
         #endregion
 
-        #region  Edit with patch
+        #region Patch
         [HttpPatch("{pontiOfInterestid}")]
         public ActionResult PartiallyUpdatePointOfOnterest(
             int cityId,
@@ -155,6 +154,11 @@ namespace CityInfo.API.Controllers
             if(!ModelState.IsValid)
             {
                 return BadRequest();
+            }
+
+            if(!TryValidateModel(pointOfInterestToPatch))
+            {
+                return  BadRequest(modelState: ModelState);
             }
 
             pointOfInterestFromStore.Name = pointOfInterestToPatch.Name;
