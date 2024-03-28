@@ -11,20 +11,34 @@ namespace CityInfo.API.Controllers
     [ApiController]
     public class PointsOfInterestController : ControllerBase
     {
-        [HttpGet]
-        public ActionResult<IEnumerable<PointOfInterestDto>> GetPointsOfInterest(int cityId)
+        private readonly ILogger<PointsOfInterestController> logger;
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger)
         {
-            var city =
-                CitiesDataStore.current.Cities
-                .FirstOrDefault(c => c.Id == cityId);
-
-            if (city == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(city.PointsOfInterest);
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
+    //    [HttpGet]
+    //    public async ActionResult<IEnumerable<PointOfInterestDto>> GetPointsOfInterest(int cityId)
+    //    {
+    //        try
+    //        {
+    //            var city =
+    //CitiesDataStore.current.Cities
+    //.FirstOrDefault(c => c.Id == cityId);
+
+    //            if (city == null)
+    //            {
+    //                logger.LogInformation("null entered into get points of intresets action");
+    //                return NotFound();
+    //            }
+    //            return Ok(city.PointsOfInterest);
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            logger.LogCritical("null entered into get points of intresets action", ex);
+    //            throw;
+    //        }
+    //    }
 
         [HttpGet("{pointOfInterestId}", Name = "GetPointOfInterest")]
         public ActionResult<PointOfInterestDto> GetPointOfInterest(
@@ -128,7 +142,7 @@ namespace CityInfo.API.Controllers
         public ActionResult PartiallyUpdatePointOfOnterest(
             int cityId,
             int pontiOfInterestid,
-            JsonPatchDocument<PointOdInerestForUpdate>  patchDocument
+            JsonPatchDocument<PointOdInerestForUpdate> patchDocument
             )
         {
             //find  city
@@ -146,23 +160,46 @@ namespace CityInfo.API.Controllers
             var pointOfInterestToPatch = new PointOdInerestForUpdate()
             {
                 Name = pointOfInterestFromStore.Name,
-                Description=pointOfInterestFromStore.Description
+                Description = pointOfInterestFromStore.Description
             };
 
-            patchDocument.ApplyTo(pointOfInterestToPatch,  ModelState);
+            patchDocument.ApplyTo(pointOfInterestToPatch, ModelState);
 
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            if(!TryValidateModel(pointOfInterestToPatch))
+            if (!TryValidateModel(pointOfInterestToPatch))
             {
-                return  BadRequest(modelState: ModelState);
+                return BadRequest(modelState: ModelState);
             }
 
             pointOfInterestFromStore.Name = pointOfInterestToPatch.Name;
             pointOfInterestFromStore.Description = pointOfInterestToPatch.Description;
+
+            return NoContent();
+        }
+
+        #endregion
+
+        #region Delete
+
+        [HttpDelete("{pointOfInterestId}")]
+        public ActionResult DeletePointOfInterest(int cityId, int pointOfInterestId)
+        {
+            var city = CitiesDataStore.current.Cities.FirstOrDefault(c => c.Id == cityId);
+
+            if (city is null) return NotFound();
+
+            var point = city.PointsOfInterest.FirstOrDefault(c => c.Id == pointOfInterestId);
+
+            if (point == null)
+            {
+                return NotFound();
+            }
+
+            city.PointsOfInterest.Remove(point);
 
             return NoContent();
         }
